@@ -8,6 +8,14 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "AMC Tracker",
   description: "Track your AMC A-List savings",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AMC Tracker",
+  },
+  icons: {
+    apple: "/icons/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
