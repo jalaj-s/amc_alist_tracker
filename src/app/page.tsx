@@ -9,6 +9,7 @@ import { SavingsHero } from "@/components/savings-hero";
 import { BreakEvenCard } from "@/components/break-even-card";
 import { QuickStats } from "@/components/quick-stats";
 import { MovieList } from "@/components/movie-list";
+import { AuthGuard } from "@/components/auth-guard";
 import Link from "next/link";
 
 export default function Home() {
@@ -23,6 +24,7 @@ export default function Home() {
   const summary = calculateSavings(movies, proratedCost);
 
   return (
+    <AuthGuard>
     <div className="p-4 space-y-3">
       <div className="flex justify-between items-center">
         <span className="font-semibold text-sm">AMC Tracker</span>
@@ -40,5 +42,6 @@ export default function Home() {
         </>
       )}
     </div>
+    </AuthGuard>
   );
 }

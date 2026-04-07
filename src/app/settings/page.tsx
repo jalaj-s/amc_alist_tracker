@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { createClient } from "@/lib/supabase/client";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/config";
+import { AuthGuard } from "@/components/auth-guard";
 import { useRouter } from "next/navigation";
 import { FORMAT_LABELS, DAY_LABELS } from "@/lib/constants";
 
@@ -21,14 +23,14 @@ export default function SettingsPage() {
   }
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOut(auth);
     router.push("/login");
   }
 
   if (loading) return <div className="p-4 text-center text-gray-600 text-sm pt-12">Loading...</div>;
 
   return (
+    <AuthGuard>
     <div className="p-4 space-y-6">
       <h1 className="text-xl font-bold">Settings</h1>
 
@@ -105,5 +107,6 @@ export default function SettingsPage() {
 
       <button onClick={handleLogout} className="w-full bg-card border border-gray-700 rounded-xl py-3 text-sm text-accent-red font-semibold">Log Out</button>
     </div>
+    </AuthGuard>
   );
 }

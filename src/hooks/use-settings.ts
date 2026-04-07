@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { doc, getDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { useAuth } from "@/lib/firebase/auth-context";
 import type { Profile, FormatPricing, DiscountDay, AmcLocation } from "@/lib/types";
 
 export function useSettings() {
@@ -10,54 +12,66 @@ export function useSettings() {
   const [discountDays, setDiscountDays] = useState<DiscountDay[]>([]);
   const [locations, setLocations] = useState<AmcLocation[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const { user } = useAuth();
 
   const fetchAll = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const [profileRes, pricingRes, daysRes, locsRes] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
-      supabase.from("format_pricing").select("*").eq("user_id", user.id),
-      supabase.from("discount_days").select("*").eq("user_id", user.id),
-      supabase.from("amc_locations").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-    ]);
-    setProfile(profileRes.data as Profile);
-    setPricing((pricingRes.data as FormatPricing[]) || []);
-    setDiscountDays((daysRes.data as DiscountDay[]) || []);
-    setLocations((locsRes.data as AmcLocation[]) || []);
+
+    const profileRef = doc(db, "profiles", user.uid);
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      setProfile({ id: user.uid, ...profileSnap.data() } as Profile);
+    }
+
+    const pricingSnap = await getDocs(collection(db, "profiles", user.uid, "format_pricing"));
+    setPricing(pricingSnap.docs.map((d) => ({ id: d.id, user_id: user.uid, ...d.data() } as FormatPricing)));
+
+    const daysSnap = await getDocs(collection(db, "profiles", user.uid, "discount_days"));
+    setDiscountDays(daysSnap.docs.map((d) => ({ id: d.id, user_id: user.uid, ...d.data() } as DiscountDay)));
+
+    const locsSnap = await getDocs(collection(db, "profiles", user.uid, "amc_locations"));
+    const locs = locsSnap.docs.map((d) => ({ id: d.id, user_id: user.uid, ...d.data() } as AmcLocation));
+    locs.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    setLocations(locs);
+
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   async function updateProfile(updates: Partial<Profile>) {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("profiles").update(updates).eq("id", user.id);
+    const profileRef = doc(db, "profiles", user.uid);
+    await updateDoc(profileRef, updates);
     await fetchAll();
   }
 
   async function updatePricing(format: string, regularPrice: number, discountPrice: number) {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("format_pricing").upsert(
-      { user_id: user.id, format, regular_price: regularPrice, discount_price: discountPrice },
-      { onConflict: "user_id,format" }
-    );
+    const pricingRef = collection(db, "profiles", user.uid, "format_pricing");
+    const q = query(pricingRef, where("format", "==", format));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      await addDoc(pricingRef, { format, regular_price: regularPrice, discount_price: discountPrice });
+    } else {
+      await updateDoc(snap.docs[0].ref, { regular_price: regularPrice, discount_price: discountPrice });
+    }
     await fetchAll();
   }
 
   async function addLocation(name: string) {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("amc_locations").insert({ user_id: user.id, name }).select().single();
+    const locsRef = collection(db, "profiles", user.uid, "amc_locations");
+    const docRef = await addDoc(locsRef, { name, created_at: new Date().toISOString() });
     await fetchAll();
-    return data as AmcLocation;
+    return { id: docRef.id, user_id: user.uid, name, created_at: new Date().toISOString() } as AmcLocation;
   }
 
   async function removeLocation(id: string) {
-    await supabase.from("amc_locations").delete().eq("id", id);
+    if (!user) return;
+    await deleteDoc(doc(db, "profiles", user.uid, "amc_locations", id));
     await fetchAll();
   }
 

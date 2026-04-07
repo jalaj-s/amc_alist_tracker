@@ -8,6 +8,7 @@ import { SavingsChart } from "@/components/savings-chart";
 import { MonthlyBreakdown } from "@/components/monthly-breakdown";
 import { LetterboxdInsights } from "@/components/letterboxd-insights";
 import { FormatLocationStats } from "@/components/format-location-stats";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function StatsPage() {
   const { range, setRange, dateRange } = useTimeRange();
@@ -17,6 +18,7 @@ export default function StatsPage() {
   const membershipCost = profile?.membership_cost ?? 25.99;
 
   return (
+    <AuthGuard>
     <div className="p-4 space-y-3">
       <h1 className="text-xl font-bold">Stats</h1>
       <TimeRangePills value={range} onChange={setRange} />
@@ -31,5 +33,6 @@ export default function StatsPage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }

@@ -6,6 +6,7 @@ import { useMovies } from "@/hooks/use-movies";
 import { BottomSheet } from "@/components/bottom-sheet";
 import { MovieTriageSheet } from "@/components/movie-triage-sheet";
 import { MovieSearch } from "@/components/movie-search";
+import { AuthGuard } from "@/components/auth-guard";
 import type { LetterboxdEntry } from "@/lib/types";
 import type { TmdbSearchResult } from "@/lib/tmdb";
 
@@ -23,7 +24,7 @@ export default function SyncPage() {
   async function handleSync() {
     setSyncing(true); setSyncError("");
     try {
-      const res = await fetch("/api/letterboxd");
+      const res = await fetch(`/api/letterboxd?username=${encodeURIComponent(profile!.letterboxd_username!)}`);
       if (!res.ok) { const data = await res.json(); setSyncError(data.error || "Sync failed"); return; }
       const data: LetterboxdEntry[] = await res.json();
       setEntries(data);
@@ -47,6 +48,7 @@ export default function SyncPage() {
   const unsavedEntries = entries.filter((e) => !savedIds.has(`${e.title}-${e.watched_date}`));
 
   return (
+    <AuthGuard>
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">Sync</h1>
       <div className="space-y-2">
@@ -98,5 +100,6 @@ export default function SyncPage() {
         </div>
       </BottomSheet>
     </div>
+    </AuthGuard>
   );
 }

@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
+import { AuthProvider } from "@/lib/firebase/auth-context";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,8 +34,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen`}>
-        <main className="pb-20 max-w-md mx-auto">{children}</main>
-        <BottomNav />
+        <AuthProvider>
+          <main className="pb-20 max-w-md mx-auto">{children}</main>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );
