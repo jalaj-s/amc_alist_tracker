@@ -20,7 +20,7 @@ export function BottomSheet({ open, onClose, children }: BottomSheetProps) {
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="absolute bottom-0 left-0 right-0 bg-[#1e1e2e] rounded-t-2xl max-h-[85vh] overflow-y-auto border-t border-gray-700">
+      <div className="absolute bottom-0 left-0 right-0 bg-[#1e1e2e] rounded-t-2xl max-h-[85vh] overflow-y-auto border-t border-gray-700" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-9 h-1 bg-gray-600 rounded-full" />
         </div>

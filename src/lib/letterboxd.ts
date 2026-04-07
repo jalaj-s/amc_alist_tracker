@@ -27,7 +27,18 @@ export function parseLetterboxdRss(xml: string): LetterboxdEntry[] {
 function extractTag(xml: string, tag: string): string | null {
   const regex = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`);
   const match = regex.exec(xml);
-  return match ? match[1].trim() : null;
+  return match ? decodeHtmlEntities(match[1].trim()) : null;
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num)));
 }
 
 export function buildLetterboxdRssUrl(username: string): string {
