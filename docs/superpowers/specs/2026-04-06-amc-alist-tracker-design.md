@@ -6,7 +6,7 @@ A mobile-first PWA for tracking movies seen with an AMC A-List membership, calcu
 
 ## Core Problem
 
-AMC A-List costs ~$24.99/month. Members have no easy way to know if they're getting their money's worth. This app answers: "Am I breaking even? How much am I actually saving?"
+AMC A-List costs ~$25.99/month. Members have no easy way to know if they're getting their money's worth. This app answers: "Am I breaking even? How much am I actually saving?"
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ AMC A-List costs ~$24.99/month. Members have no easy way to know if they're gett
 - `id` (uuid, PK)
 - `email`
 - `letterboxd_username` (nullable)
-- `membership_cost` (decimal, default 24.99)
+- `membership_cost` (decimal, default 25.99)
 - `created_at`
 
 ### AMC Locations
@@ -39,15 +39,14 @@ AMC A-List costs ~$24.99/month. Members have no easy way to know if they're gett
 - `regular_price` (decimal)
 - `discount_price` (decimal — Tue/Wed half-price)
 
-Default prices seeded on account creation:
-| Format | Regular | Discount (Tue/Wed) |
-|--------|---------|-------------------|
-| Standard | $13.00 | $6.50 |
-| IMAX | $20.00 | $10.00 |
-| Dolby Cinema | $25.00 | $12.50 |
-| 3D | $17.00 | $8.50 |
-| Prime | $22.00 | $11.00 |
-| ScreenX | $22.00 | $11.00 |
+Default prices seeded on account creation (based on Boston AMC pricing):
+| Format | Regular | Discount (Tue/Wed, 50% off) |
+|--------|---------|----------------------------|
+| Standard | $15.99 | $8.00 |
+| IMAX | $22.99 | $11.50 |
+| Dolby Cinema | $22.99 | $11.50 |
+
+Note: 3D, Prime, and ScreenX are available as format options but not seeded with default prices. Users can add custom formats/prices in settings.
 
 ### Discount Days
 - `id` (uuid, PK)
@@ -133,7 +132,7 @@ Default: Tuesday (2), Wednesday (3). Editable in settings.
 - **Movie info** at top (title, date, rating)
 - **"Where did you see this?"** — three large buttons: AMC Theater / Other Theater / Home
 - If AMC selected:
-  - **Format selector** — wrapping button grid (Standard, IMAX, Dolby Cinema, 3D, Prime, ScreenX)
+  - **Format selector** — wrapping button grid (Standard, IMAX, Dolby Cinema, plus any custom formats the user adds)
   - **Location selector** — dropdown showing recently used AMC locations, option to add new
   - **Discount day toggle** — "Discount day (Tue/Wed)?" with on/off toggle, note about half-price
 - If Other Theater or Home: sheet saves and dismisses immediately, no extra fields
@@ -174,7 +173,7 @@ Default: Tuesday (2), Wednesday (3). Editable in settings.
 4. **"Do you usually go on discount days (Tue/Wed)?"** — toggle
 5. **Results:**
    - "You'd spend ~$X/month on tickets"
-   - "A-List costs $24.99/month"
+   - "A-List costs $25.99/month"
    - "You'd save $X/month ($X/year)" or "A-List isn't worth it — you'd overpay by $X/month"
    - Honest either way
 
@@ -183,7 +182,7 @@ No account needed to use the simulator. Shareable via URL.
 ### Settings
 
 - **Letterboxd username** — text input, used for sync
-- **Membership cost** — decimal input, default $24.99
+- **Membership cost** — decimal input, default $25.99
 - **Format pricing** — editable table of regular + discount prices per format
 - **AMC locations** — manage saved locations (add/remove)
 - **Discount days** — which days of the week are half-price (default: Tue, Wed)
@@ -220,7 +219,7 @@ For average community ratings, we can scrape the individual film page or use TMD
 
 ## Edge Cases
 
-- **No movies this month:** Home screen shows $0 saved, net savings is -$24.99 (red). This is honest and motivating.
+- **No movies this month:** Home screen shows $0 saved, net savings is -$25.99 (red). This is honest and motivating.
 - **Custom date range spanning partial months:** Pro-rate the membership cost (e.g. 15 days = ~$12.50 membership cost for break-even calculation).
 - **Discount day toggle forgotten:** Default is off. The app could auto-detect based on the watched_date's day of week and pre-fill the toggle, but let the user override.
 - **Duplicate movies:** If a movie is synced from Letterboxd and also manually entered with the same title + date, flag it during manual entry: "This movie was already logged on [date]. Add anyway?"
