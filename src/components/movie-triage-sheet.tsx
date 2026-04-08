@@ -24,6 +24,7 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
   const [format, setFormat] = useState<MovieFormat | null>(null);
   const [locationId, setLocationId] = useState("");
   const [isDiscountDay, setIsDiscountDay] = useState(false);
+  const [isMatinee, setIsMatinee] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [showNewLocation, setShowNewLocation] = useState(false);
 
@@ -42,7 +43,7 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
       });
       return;
     }
-    const ticketValue = format ? calculateTicketValue(format, isDiscountDay, pricing) : undefined;
+    const ticketValue = format ? calculateTicketValue(format, isDiscountDay, pricing, isMatinee) : undefined;
     onSave({
       title: entry.title, watched_date: entry.watched_date, venue_type: "amc",
       format: format ?? undefined, amc_location_id: locationId || undefined,
@@ -118,17 +119,28 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
             <button onClick={() => setShowNewLocation(true)} className="text-accent text-xs mb-4">+ Add new location</button>
           )}
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="text-xs text-gray-500 font-semibold mb-2">Pricing</div>
+          <div className="flex items-center justify-between mb-2">
             <div>
-              <div className="text-xs text-gray-500 font-semibold">Discount day (Tue/Wed)?</div>
+              <div className="text-xs text-gray-400">Discount day (Tue/Wed)</div>
               <div className="text-[9px] text-gray-600">
-                Half-price ticket value
+                50% off
                 {suggestDiscount && " · This was a " + ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][watchedDay]}
               </div>
             </div>
-            <button onClick={() => setIsDiscountDay(!isDiscountDay)}
+            <button onClick={() => { setIsDiscountDay(!isDiscountDay); if (!isDiscountDay) setIsMatinee(false); }}
               className={`w-10 h-6 rounded-full transition-colors relative ${isDiscountDay ? "bg-accent" : "bg-gray-700"}`}>
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${isDiscountDay ? "left-5" : "left-1"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-xs text-gray-400">Matinee</div>
+              <div className="text-[9px] text-gray-600">20% off afternoon showing</div>
+            </div>
+            <button onClick={() => { setIsMatinee(!isMatinee); if (!isMatinee) setIsDiscountDay(false); }}
+              className={`w-10 h-6 rounded-full transition-colors relative ${isMatinee ? "bg-accent" : "bg-gray-700"}`}>
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${isMatinee ? "left-5" : "left-1"}`} />
             </button>
           </div>
         </>

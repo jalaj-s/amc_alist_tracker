@@ -3,12 +3,15 @@ import type { Movie, MovieFormat, FormatPricing, SavingsSummary } from "./types"
 export function calculateTicketValue(
   format: MovieFormat | null,
   isDiscountDay: boolean,
-  pricing: FormatPricing[]
+  pricing: FormatPricing[],
+  isMatinee: boolean = false
 ): number {
   if (!format) return 0;
   const formatPricing = pricing.find((p) => p.format === format);
   if (!formatPricing) return 0;
-  return isDiscountDay ? formatPricing.discount_price : formatPricing.regular_price;
+  if (isDiscountDay) return formatPricing.discount_price;
+  if (isMatinee) return Math.round(formatPricing.regular_price * 0.8 * 100) / 100;
+  return formatPricing.regular_price;
 }
 
 export function calculateSavings(movies: Movie[], membershipCost: number): SavingsSummary {
