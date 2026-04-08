@@ -53,6 +53,7 @@ export interface Profile {
   email: string;
   letterboxd_username: string | null;
   membership_cost: number;
+  membership_start_date: string | null;
   created_at: string;
 }
 

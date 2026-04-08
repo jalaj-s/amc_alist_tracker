@@ -12,12 +12,14 @@ export function SettingsContent() {
   const router = useRouter();
   const [letterboxdUsername, setLetterboxdUsername] = useState("");
   const [membershipCost, setMembershipCost] = useState("");
+  const [membershipStartDate, setMembershipStartDate] = useState("");
   const [newLocationName, setNewLocationName] = useState("");
   const [initialized, setInitialized] = useState(false);
 
   if (profile && !initialized) {
     setLetterboxdUsername(profile.letterboxd_username || "");
     setMembershipCost(profile.membership_cost.toString());
+    setMembershipStartDate(profile.membership_start_date || "");
     setInitialized(true);
   }
 
@@ -51,6 +53,17 @@ export function SettingsContent() {
               className="bg-transparent py-2 text-sm text-white flex-1 focus:outline-none" />
           </div>
           <button onClick={() => updateProfile({ membership_cost: parseFloat(membershipCost) || 25.99 })}
+            className="bg-accent text-black px-4 py-2 rounded-lg text-sm font-semibold">Save</button>
+        </div>
+      </section>
+
+      <section>
+        <label className="text-xs text-gray-500 font-semibold block mb-1.5">Membership Start Date</label>
+        <p className="text-[10px] text-gray-600 mb-1.5">Used for "All Time" savings calculation</p>
+        <div className="flex gap-2">
+          <input type="date" value={membershipStartDate} onChange={(e) => setMembershipStartDate(e.target.value)}
+            className="flex-1 bg-card border border-gray-700 rounded-lg px-3 py-2 text-sm text-white" />
+          <button onClick={() => updateProfile({ membership_start_date: membershipStartDate || null })}
             className="bg-accent text-black px-4 py-2 rounded-lg text-sm font-semibold">Save</button>
         </div>
       </section>

@@ -11,9 +11,9 @@ import { MovieList } from "@/components/movie-list";
 import Link from "next/link";
 
 export function HomeDashboard() {
-  const { range, setRange, dateRange } = useTimeRange();
-  const { movies, loading: moviesLoading, deleteMovie } = useMovies(dateRange);
   const { profile, loading: settingsLoading } = useSettings();
+  const { range, setRange, dateRange } = useTimeRange(profile?.membership_start_date);
+  const { movies, loading: moviesLoading, deleteMovie } = useMovies(dateRange);
   const loading = moviesLoading || settingsLoading;
   const membershipCost = profile?.membership_cost ?? 25.99;
   const proratedCost = range === "this_month"

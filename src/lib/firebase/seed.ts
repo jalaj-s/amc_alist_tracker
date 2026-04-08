@@ -11,6 +11,7 @@ export async function ensureUserProfile(userId: string, email: string) {
       email,
       letterboxd_username: null,
       membership_cost: 25.99,
+      membership_start_date: null,
       created_at: new Date().toISOString(),
     });
 

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import type { TimeRange } from "@/lib/types";
 
-export function useTimeRange() {
+export function useTimeRange(membershipStartDate?: string | null) {
   const [range, setRange] = useState<TimeRange>("this_month");
 
   const dateRange = useMemo(() => {
@@ -23,7 +23,8 @@ export function useTimeRange() {
       return { from: `${now.getFullYear()}-01-01`, to: today };
     }
     if (range === "all_time") {
-      return { from: "2000-01-01", to: today };
+      const from = membershipStartDate || "2020-01-01";
+      return { from, to: today };
     }
     if (typeof range === "object" && "type" in range && range.type === "month") {
       const daysInMonth = new Date(range.year, range.month, 0).getDate();
@@ -32,7 +33,7 @@ export function useTimeRange() {
       return { from, to };
     }
     return range as { from: string; to: string };
-  }, [range]);
+  }, [range, membershipStartDate]);
 
   return { range, setRange, dateRange };
 }

@@ -10,9 +10,9 @@ import { LetterboxdInsights } from "@/components/letterboxd-insights";
 import { FormatLocationStats } from "@/components/format-location-stats";
 
 export function StatsContent() {
-  const { range, setRange, dateRange } = useTimeRange();
-  const { movies, loading: moviesLoading } = useMovies(dateRange);
   const { profile, loading: settingsLoading } = useSettings();
+  const { range, setRange, dateRange } = useTimeRange(profile?.membership_start_date);
+  const { movies, loading: moviesLoading } = useMovies(dateRange);
   const loading = moviesLoading || settingsLoading;
   const membershipCost = profile?.membership_cost ?? 25.99;
 
