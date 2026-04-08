@@ -25,6 +25,7 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
   const [locationId, setLocationId] = useState("");
   const [isDiscountDay, setIsDiscountDay] = useState(false);
   const [isMatinee, setIsMatinee] = useState(false);
+  const [manualRating, setManualRating] = useState<string>("");
   const [newLocationName, setNewLocationName] = useState("");
   const [showNewLocation, setShowNewLocation] = useState(false);
 
@@ -35,10 +36,12 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
 
   async function handleSave() {
     if (!venueType) return;
+    const rating = lbEntry?.rating ?? (manualRating ? parseFloat(manualRating) : undefined);
+
     if (venueType !== "amc") {
       onSave({
         title: entry.title, watched_date: entry.watched_date, venue_type: venueType,
-        is_discount_day: false, letterboxd_rating: lbEntry?.rating ?? undefined,
+        is_discount_day: false, letterboxd_rating: rating,
         letterboxd_url: lbEntry?.letterboxd_url, source,
       });
       return;
@@ -48,7 +51,7 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
       title: entry.title, watched_date: entry.watched_date, venue_type: "amc",
       format: format ?? undefined, amc_location_id: locationId || undefined,
       is_discount_day: isDiscountDay, ticket_value: ticketValue,
-      letterboxd_rating: lbEntry?.rating ?? undefined, letterboxd_url: lbEntry?.letterboxd_url, source,
+      letterboxd_rating: rating, letterboxd_url: lbEntry?.letterboxd_url, source,
     });
   }
 
@@ -67,6 +70,36 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
           {lbEntry?.rating && <span className="text-accent-yellow"> · ★ {lbEntry.rating}</span>}
         </div>
       </div>
+
+      {/* Rating input for manual entries (Letterboxd entries already have one) */}
+      {!lbEntry && (
+        <div className="mb-4">
+          <div className="text-xs text-gray-500 font-semibold mb-2">Your Rating</div>
+          <div className="flex gap-1.5">
+            {[1, 2, 3, 4, 5].map((star) => {
+              const val = String(star);
+              const halfVal = String(star - 0.5);
+              const isSelected = manualRating === val;
+              const isHalfSelected = manualRating === halfVal;
+              return (
+                <button key={star} onClick={() => {
+                  if (isSelected) setManualRating(halfVal);
+                  else if (isHalfSelected) setManualRating("");
+                  else setManualRating(val);
+                }}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                    isSelected ? "border-accent-yellow bg-accent-yellow/20 text-accent-yellow"
+                    : isHalfSelected ? "border-accent-yellow/50 bg-accent-yellow/10 text-accent-yellow"
+                    : "border-gray-700 bg-card text-gray-500"
+                  }`}>
+                  {isHalfSelected ? `${star - 0.5}` : `${star}`} ★
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-[9px] text-gray-600 mt-1">Tap once for full star, twice for half, three times to clear</div>
+        </div>
+      )}
 
       <div className="text-xs text-gray-500 font-semibold mb-2">Where did you see this?</div>
       <div className="flex gap-2 mb-4">
