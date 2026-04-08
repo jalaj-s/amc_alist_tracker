@@ -74,25 +74,58 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
       {/* Rating input for manual entries (Letterboxd entries already have one) */}
       {!lbEntry && (
         <div className="mb-4">
-          <div className="text-xs text-gray-500 font-semibold mb-2">
-            Your Rating {manualRating && <span className="text-accent-yellow">— {manualRating} ★</span>}
-          </div>
-          <div className="flex gap-1">
-            {[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((val) => {
-              const isSelected = manualRating === String(val);
-              const isHalf = val % 1 !== 0;
-              return (
-                <button key={val}
-                  onClick={() => setManualRating(isSelected ? "" : String(val))}
-                  className={`flex-1 py-1.5 rounded text-[10px] font-semibold border transition-colors ${
-                    isSelected ? "border-accent-yellow bg-accent-yellow/20 text-accent-yellow"
-                    : parseFloat(manualRating || "0") >= val ? "border-accent-yellow/30 bg-accent-yellow/10 text-accent-yellow/70"
-                    : "border-gray-700 bg-card text-gray-600"
-                  }`}>
-                  {isHalf ? "½" : val}
-                </button>
-              );
-            })}
+          <div className="text-xs text-gray-500 font-semibold mb-2">Your Rating</div>
+          <div className="flex items-center gap-1">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const currentRating = parseFloat(manualRating || "0");
+                const isFull = currentRating >= star;
+                const isHalf = !isFull && currentRating >= star - 0.5;
+                return (
+                  <div key={star} className="relative w-10 h-10 cursor-pointer flex">
+                    {/* Left half — sets half star */}
+                    <button
+                      onClick={() => {
+                        const halfVal = star - 0.5;
+                        setManualRating(currentRating === halfVal ? "" : String(halfVal));
+                      }}
+                      className="absolute left-0 top-0 w-1/2 h-full z-10"
+                    />
+                    {/* Right half — sets full star */}
+                    <button
+                      onClick={() => {
+                        setManualRating(currentRating === star ? "" : String(star));
+                      }}
+                      className="absolute right-0 top-0 w-1/2 h-full z-10"
+                    />
+                    {/* Star visual */}
+                    <svg viewBox="0 0 24 24" className="w-10 h-10">
+                      <defs>
+                        <clipPath id={`half-${star}`}>
+                          <rect x="0" y="0" width="12" height="24" />
+                        </clipPath>
+                      </defs>
+                      {/* Empty star background */}
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                        fill="none" stroke="#555" strokeWidth="1.5" />
+                      {/* Full star */}
+                      {isFull && (
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                          fill="#fbbf24" />
+                      )}
+                      {/* Half star */}
+                      {isHalf && (
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                          fill="#fbbf24" clipPath={`url(#half-${star})`} />
+                      )}
+                    </svg>
+                  </div>
+                );
+              })}
+            </div>
+            {manualRating && (
+              <span className="text-accent-yellow text-sm font-semibold ml-2">{manualRating}</span>
+            )}
           </div>
         </div>
       )}
