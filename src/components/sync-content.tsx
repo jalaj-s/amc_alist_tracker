@@ -29,7 +29,6 @@ export function SyncContent() {
   async function handleSync() {
     setSyncing(true); setSyncError("");
     try {
-      // Refresh movies list first so we have latest data
       await refetch();
       const res = await fetch(`/api/letterboxd?username=${encodeURIComponent(profile!.letterboxd_username!)}`);
       if (!res.ok) { const data = await res.json(); setSyncError(data.error || "Sync failed"); return; }
@@ -62,6 +61,7 @@ export function SyncContent() {
           className="w-full bg-card border border-gray-700 rounded-xl py-3 text-sm font-semibold disabled:opacity-50">
           {syncing ? "Syncing..." : "Sync from Letterboxd"}
         </button>
+        <p className="text-[10px] text-gray-600">Pulls your most recent ~50 diary entries. Use manual entry for older movies.</p>
         {!profile?.letterboxd_username && (
           <p className="text-xs text-gray-500">Set your Letterboxd username in <a href="/settings" className="text-accent">Settings</a> first</p>
         )}
