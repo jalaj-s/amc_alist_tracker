@@ -63,6 +63,10 @@ export function useSettings() {
 
   async function addLocation(name: string) {
     if (!user) return;
+    // Check for duplicate (case-insensitive)
+    const exists = locations.some((l) => l.name.toLowerCase() === name.toLowerCase());
+    if (exists) return locations.find((l) => l.name.toLowerCase() === name.toLowerCase());
+
     const locsRef = collection(db, "profiles", user.uid, "amc_locations");
     const docRef = await addDoc(locsRef, { name, created_at: new Date().toISOString() });
     await fetchAll();
