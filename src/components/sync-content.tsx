@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { useMovies } from "@/hooks/use-movies";
+import { useAutoSync } from "@/hooks/use-auto-sync";
 import { BottomSheet } from "@/components/bottom-sheet";
 import { MovieTriageSheet } from "@/components/movie-triage-sheet";
 import { MovieSearch } from "@/components/movie-search";
@@ -12,28 +13,22 @@ import { Toast } from "@/components/toast";
 
 export function SyncContent() {
   const { profile, pricing, locations, addLocation } = useSettings();
-  const { movies, addMovie, checkDuplicate, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
-  const [entries, setEntries] = useState<LetterboxdEntry[]>([]);
+  const { addMovie, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
+  const { newEntries, newCount } = useAutoSync();
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<LetterboxdEntry | null>(null);
   const [showManual, setShowManual] = useState(false);
   const [manualMovie, setManualMovie] = useState<{ title: string; tmdb_id?: number; watched_date: string } | null>(null);
   const [toast, setToast] = useState("");
+  const [hasSynced, setHasSynced] = useState(false);
 
-  // Build a set of already-logged movies for fast lookup
-  const loggedMovieKeys = new Set(
-    movies.map((m) => `${m.title.toLowerCase()}-${m.watched_date}`)
-  );
-
-  async function handleSync() {
+  async function handleManualSync() {
     setSyncing(true); setSyncError("");
     try {
       await refetch();
-      const res = await fetch(`/api/letterboxd?username=${encodeURIComponent(profile!.letterboxd_username!)}`);
-      if (!res.ok) { const data = await res.json(); setSyncError(data.error || "Sync failed"); return; }
-      const data: LetterboxdEntry[] = await res.json();
-      setEntries(data);
+      // Trigger a fresh auto-sync by reloading
+      window.location.reload();
     } catch { setSyncError("Failed to connect"); }
     finally { setSyncing(false); }
   }
@@ -48,31 +43,26 @@ export function SyncContent() {
     setManualMovie({ title: movie.title, tmdb_id: movie.id, watched_date: new Date().toISOString().split("T")[0] });
   }
 
-  // Filter out entries already in the database
-  const newEntries = entries.filter(
-    (e) => !loggedMovieKeys.has(`${e.title.toLowerCase()}-${e.watched_date}`)
-  );
-
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">Sync</h1>
       <div className="space-y-2">
-        <button onClick={handleSync} disabled={syncing || !profile?.letterboxd_username}
+        <button onClick={handleManualSync} disabled={syncing || !profile?.letterboxd_username}
           className="w-full bg-card border border-gray-700 rounded-xl py-3 text-sm font-semibold disabled:opacity-50">
-          {syncing ? "Syncing..." : "Sync from Letterboxd"}
+          {syncing ? "Syncing..." : "Refresh from Letterboxd"}
         </button>
-        <p className="text-[10px] text-gray-600">Pulls your most recent ~50 diary entries. Use manual entry for older movies.</p>
+        <p className="text-[10px] text-gray-600">Auto-syncs when you open the app. Tap to refresh manually.</p>
         {!profile?.letterboxd_username && (
           <p className="text-xs text-gray-500">Set your Letterboxd username in <a href="/settings" className="text-accent">Settings</a> first</p>
         )}
         {syncError && <p className="text-xs text-accent-red">{syncError}</p>}
       </div>
-      {entries.length > 0 && newEntries.length === 0 && (
+      {newCount === 0 && (
         <div className="text-center py-6 text-gray-500 text-sm">All caught up — no new movies to log</div>
       )}
-      {newEntries.length > 0 && (
+      {newCount > 0 && (
         <div className="space-y-1.5">
-          <div className="text-xs text-gray-500">{newEntries.length} new movie{newEntries.length !== 1 ? "s" : ""} to log</div>
+          <div className="text-xs text-gray-500">{newCount} new movie{newCount !== 1 ? "s" : ""} to log</div>
           {newEntries.map((entry) => (
             <button key={`${entry.title}-${entry.watched_date}`} onClick={() => setSelectedEntry(entry)}
               className="w-full bg-card rounded-lg px-3 py-2.5 flex items-center gap-3 border-2 border-gray-800 text-left">
