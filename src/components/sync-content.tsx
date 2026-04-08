@@ -42,22 +42,25 @@ export function SyncContent() {
 
   async function handleSaveEntry(data: Parameters<typeof addMovie>[0]) {
     await addMovie(data);
+    await refetch();
     setToast(`Saved "${data.title}"`);
     setSelectedEntry(null); setManualMovie(null); setShowManual(false);
   }
 
-  function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const text = ev.target?.result as string;
       const entries = parseLetterboxdCsv(text);
+      // Refresh movies list first so filtering is accurate
+      await refetch();
       setCsvEntries(entries);
       setToast(`Found ${entries.length} entries in CSV`);
     };
     reader.readAsText(file);
-    e.target.value = ""; // reset so same file can be re-uploaded
+    e.target.value = "";
   }
 
   function handleTmdbSelect(movie: TmdbSearchResult) {
