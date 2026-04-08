@@ -11,18 +11,24 @@ import type { TmdbSearchResult } from "@/lib/tmdb";
 
 export function SyncContent() {
   const { profile, pricing, locations, addLocation } = useSettings();
-  const { addMovie, checkDuplicate } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
+  const { movies, addMovie, checkDuplicate, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
   const [entries, setEntries] = useState<LetterboxdEntry[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<LetterboxdEntry | null>(null);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [showManual, setShowManual] = useState(false);
   const [manualMovie, setManualMovie] = useState<{ title: string; tmdb_id?: number; watched_date: string } | null>(null);
+
+  // Build a set of already-logged movies for fast lookup
+  const loggedMovieKeys = new Set(
+    movies.map((m) => `${m.title.toLowerCase()}-${m.watched_date}`)
+  );
 
   async function handleSync() {
     setSyncing(true); setSyncError("");
     try {
+      // Refresh movies list first so we have latest data
+      await refetch();
       const res = await fetch(`/api/letterboxd?username=${encodeURIComponent(profile!.letterboxd_username!)}`);
       if (!res.ok) { const data = await res.json(); setSyncError(data.error || "Sync failed"); return; }
       const data: LetterboxdEntry[] = await res.json();
@@ -32,11 +38,7 @@ export function SyncContent() {
   }
 
   async function handleSaveEntry(data: Parameters<typeof addMovie>[0]) {
-    const isDuplicate = await checkDuplicate(data.title, data.watched_date);
-    if (isDuplicate && !confirm(`"${data.title}" was already logged on ${data.watched_date}. Add anyway?`)) return;
     await addMovie(data);
-    const key = `${data.title}-${data.watched_date}`;
-    setSavedIds((prev) => new Set(prev).add(key));
     setSelectedEntry(null); setManualMovie(null); setShowManual(false);
   }
 
@@ -44,7 +46,10 @@ export function SyncContent() {
     setManualMovie({ title: movie.title, tmdb_id: movie.id, watched_date: new Date().toISOString().split("T")[0] });
   }
 
-  const unsavedEntries = entries.filter((e) => !savedIds.has(`${e.title}-${e.watched_date}`));
+  // Filter out entries already in the database
+  const newEntries = entries.filter(
+    (e) => !loggedMovieKeys.has(`${e.title.toLowerCase()}-${e.watched_date}`)
+  );
 
   return (
     <div className="p-4 space-y-4">
@@ -59,10 +64,13 @@ export function SyncContent() {
         )}
         {syncError && <p className="text-xs text-accent-red">{syncError}</p>}
       </div>
-      {unsavedEntries.length > 0 && (
+      {entries.length > 0 && newEntries.length === 0 && (
+        <div className="text-center py-6 text-gray-500 text-sm">All caught up — no new movies to log</div>
+      )}
+      {newEntries.length > 0 && (
         <div className="space-y-1.5">
-          <div className="text-xs text-gray-500">{unsavedEntries.length} new movie{unsavedEntries.length !== 1 ? "s" : ""} found</div>
-          {unsavedEntries.map((entry) => (
+          <div className="text-xs text-gray-500">{newEntries.length} new movie{newEntries.length !== 1 ? "s" : ""} to log</div>
+          {newEntries.map((entry) => (
             <button key={`${entry.title}-${entry.watched_date}`} onClick={() => setSelectedEntry(entry)}
               className="w-full bg-card rounded-lg px-3 py-2.5 flex items-center gap-3 border-2 border-gray-800 text-left">
               <div className="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center text-sm">🎬</div>
