@@ -10,10 +10,11 @@ import { MovieSearch } from "@/components/movie-search";
 import type { LetterboxdEntry } from "@/lib/types";
 import type { TmdbSearchResult } from "@/lib/tmdb";
 import { Toast } from "@/components/toast";
+import { parseLetterboxdCsv } from "@/lib/letterboxd-csv";
 
 export function SyncContent() {
   const { profile, pricing, locations, addLocation } = useSettings();
-  const { addMovie, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
+  const { movies, addMovie, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
   const { newEntries, hasNew, markSynced, doSync } = useAutoSync();
   const newCount = newEntries.length;
 
@@ -27,7 +28,7 @@ export function SyncContent() {
   const [showManual, setShowManual] = useState(false);
   const [manualMovie, setManualMovie] = useState<{ title: string; tmdb_id?: number; watched_date: string } | null>(null);
   const [toast, setToast] = useState("");
-  const [hasSynced, setHasSynced] = useState(false);
+  const [csvEntries, setCsvEntries] = useState<LetterboxdEntry[]>([]);
 
   async function handleManualSync() {
     setSyncing(true); setSyncError("");
@@ -43,6 +44,20 @@ export function SyncContent() {
     await addMovie(data);
     setToast(`Saved "${data.title}"`);
     setSelectedEntry(null); setManualMovie(null); setShowManual(false);
+  }
+
+  function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const entries = parseLetterboxdCsv(text);
+      setCsvEntries(entries);
+      setToast(`Found ${entries.length} entries in CSV`);
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // reset so same file can be re-uploaded
   }
 
   function handleTmdbSelect(movie: TmdbSearchResult) {
@@ -63,25 +78,48 @@ export function SyncContent() {
         )}
         {syncError && <p className="text-xs text-accent-red">{syncError}</p>}
       </div>
-      {newCount === 0 && (
-        <div className="text-center py-6 text-gray-500 text-sm">All caught up — no new movies to log</div>
-      )}
-      {newCount > 0 && (
-        <div className="space-y-1.5">
-          <div className="text-xs text-gray-500">{newCount} new movie{newCount !== 1 ? "s" : ""} to log</div>
-          {newEntries.map((entry) => (
-            <button key={`${entry.title}-${entry.watched_date}`} onClick={() => setSelectedEntry(entry)}
-              className="w-full bg-card rounded-lg px-3 py-2.5 flex items-center gap-3 border-2 border-gray-800 text-left">
-              <div className="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center text-sm">🎬</div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate">{entry.title}</div>
-                <div className="text-[10px] text-gray-500">{entry.watched_date}{entry.rating && <span className="text-accent-yellow"> · ★ {entry.rating}</span>}</div>
-              </div>
-              <span className="text-gray-600 text-sm">›</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* CSV import */}
+      <label className="block w-full bg-card border border-gray-700 rounded-xl py-3 text-sm font-semibold text-center cursor-pointer">
+        Import Letterboxd CSV
+        <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+      </label>
+      <p className="text-[10px] text-gray-600">For full history: Letterboxd → Settings → Import & Export → Export Your Data</p>
+
+      {/* Combined entries from RSS + CSV, deduplicated */}
+      {(() => {
+        const loggedKeys = new Set(movies.map((m) => `${m.title.toLowerCase()}-${m.watched_date}`));
+        // Merge and deduplicate RSS + CSV entries
+        const allEntries = new Map<string, LetterboxdEntry>();
+        for (const e of newEntries) allEntries.set(`${e.title.toLowerCase()}-${e.watched_date}`, e);
+        for (const e of csvEntries) {
+          const key = `${e.title.toLowerCase()}-${e.watched_date}`;
+          if (!allEntries.has(key)) allEntries.set(key, e);
+        }
+        // Filter out already logged
+        const unlogged = Array.from(allEntries.values())
+          .filter((e) => !loggedKeys.has(`${e.title.toLowerCase()}-${e.watched_date}`))
+          .sort((a, b) => b.watched_date.localeCompare(a.watched_date));
+
+        if (unlogged.length === 0) {
+          return <div className="text-center py-6 text-gray-500 text-sm">All caught up — no new movies to log</div>;
+        }
+        return (
+          <div className="space-y-1.5">
+            <div className="text-xs text-gray-500">{unlogged.length} movie{unlogged.length !== 1 ? "s" : ""} to log</div>
+            {unlogged.map((entry) => (
+              <button key={`${entry.title}-${entry.watched_date}`} onClick={() => setSelectedEntry(entry)}
+                className="w-full bg-card rounded-lg px-3 py-2.5 flex items-center gap-3 border-2 border-gray-800 text-left">
+                <div className="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center text-sm">🎬</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate">{entry.title}</div>
+                  <div className="text-[10px] text-gray-500">{entry.watched_date}{entry.rating && <span className="text-accent-yellow"> · ★ {entry.rating}</span>}</div>
+                </div>
+                <span className="text-gray-600 text-sm">›</span>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
       <div className="border-t border-gray-800" />
       <button onClick={() => setShowManual(true)} className="w-full bg-card border border-gray-700 rounded-xl py-3 text-sm font-semibold">+ Add Manually</button>
       <BottomSheet open={!!selectedEntry} onClose={() => setSelectedEntry(null)}>
