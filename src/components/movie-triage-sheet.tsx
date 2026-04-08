@@ -74,30 +74,26 @@ export function MovieTriageSheet({ entry, pricing, locations, onSave, onAddLocat
       {/* Rating input for manual entries (Letterboxd entries already have one) */}
       {!lbEntry && (
         <div className="mb-4">
-          <div className="text-xs text-gray-500 font-semibold mb-2">Your Rating</div>
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5].map((star) => {
-              const val = String(star);
-              const halfVal = String(star - 0.5);
-              const isSelected = manualRating === val;
-              const isHalfSelected = manualRating === halfVal;
+          <div className="text-xs text-gray-500 font-semibold mb-2">
+            Your Rating {manualRating && <span className="text-accent-yellow">— {manualRating} ★</span>}
+          </div>
+          <div className="flex gap-1">
+            {[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((val) => {
+              const isSelected = manualRating === String(val);
+              const isHalf = val % 1 !== 0;
               return (
-                <button key={star} onClick={() => {
-                  if (isSelected) setManualRating(halfVal);
-                  else if (isHalfSelected) setManualRating("");
-                  else setManualRating(val);
-                }}
-                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                <button key={val}
+                  onClick={() => setManualRating(isSelected ? "" : String(val))}
+                  className={`flex-1 py-1.5 rounded text-[10px] font-semibold border transition-colors ${
                     isSelected ? "border-accent-yellow bg-accent-yellow/20 text-accent-yellow"
-                    : isHalfSelected ? "border-accent-yellow/50 bg-accent-yellow/10 text-accent-yellow"
-                    : "border-gray-700 bg-card text-gray-500"
+                    : parseFloat(manualRating || "0") >= val ? "border-accent-yellow/30 bg-accent-yellow/10 text-accent-yellow/70"
+                    : "border-gray-700 bg-card text-gray-600"
                   }`}>
-                  {isHalfSelected ? `${star - 0.5}` : `${star}`} ★
+                  {isHalf ? "½" : val}
                 </button>
               );
             })}
           </div>
-          <div className="text-[9px] text-gray-600 mt-1">Tap once for full star, twice for half, three times to clear</div>
         </div>
       )}
 
