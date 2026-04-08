@@ -19,6 +19,11 @@ export function useTimeRange(membershipStartDate?: string | null) {
       from.setDate(from.getDate() - 90);
       return { from: from.toISOString().split("T")[0], to: today };
     }
+    if (range === "1_year") {
+      const from = new Date(now);
+      from.setFullYear(from.getFullYear() - 1);
+      return { from: from.toISOString().split("T")[0], to: today };
+    }
     if (range === "ytd") {
       return { from: `${now.getFullYear()}-01-01`, to: today };
     }

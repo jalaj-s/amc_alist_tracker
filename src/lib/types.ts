@@ -67,6 +67,7 @@ export interface LetterboxdEntry {
 export type TimeRange =
   | "this_month"
   | "90_days"
+  | "1_year"
   | "ytd"
   | "all_time"
   | { type: "month"; year: number; month: number }

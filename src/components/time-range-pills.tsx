@@ -32,6 +32,7 @@ function getMonthLabel(year: number, month: number): string {
 
 const presets: { label: string; value: TimeRange }[] = [
   { label: "90 Days", value: "90_days" },
+  { label: "1Y", value: "1_year" },
   { label: "YTD", value: "ytd" },
   { label: "All Time", value: "all_time" },
 ];
