@@ -8,6 +8,7 @@ import { MovieTriageSheet } from "@/components/movie-triage-sheet";
 import { MovieSearch } from "@/components/movie-search";
 import type { LetterboxdEntry } from "@/lib/types";
 import type { TmdbSearchResult } from "@/lib/tmdb";
+import { Toast } from "@/components/toast";
 
 export function SyncContent() {
   const { profile, pricing, locations, addLocation } = useSettings();
@@ -18,6 +19,7 @@ export function SyncContent() {
   const [selectedEntry, setSelectedEntry] = useState<LetterboxdEntry | null>(null);
   const [showManual, setShowManual] = useState(false);
   const [manualMovie, setManualMovie] = useState<{ title: string; tmdb_id?: number; watched_date: string } | null>(null);
+  const [toast, setToast] = useState("");
 
   // Build a set of already-logged movies for fast lookup
   const loggedMovieKeys = new Set(
@@ -39,6 +41,7 @@ export function SyncContent() {
 
   async function handleSaveEntry(data: Parameters<typeof addMovie>[0]) {
     await addMovie(data);
+    setToast(`Saved "${data.title}"`);
     setSelectedEntry(null); setManualMovie(null); setShowManual(false);
   }
 
@@ -105,6 +108,7 @@ export function SyncContent() {
           )}
         </div>
       </BottomSheet>
+      <Toast message={toast} visible={!!toast} onClose={() => setToast("")} />
     </div>
   );
 }
