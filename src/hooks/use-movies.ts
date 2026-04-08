@@ -72,10 +72,12 @@ export function useMovies(dateRange: { from: string; to: string }) {
   }) {
     if (!user) return;
     const moviesRef = collection(db, "profiles", user.uid, "movies");
-    await addDoc(moviesRef, {
-      ...movie,
-      created_at: new Date().toISOString(),
-    });
+    // Strip undefined values — Firestore rejects them
+    const cleanMovie = Object.fromEntries(
+      Object.entries({ ...movie, created_at: new Date().toISOString() })
+        .filter(([, v]) => v !== undefined)
+    );
+    await addDoc(moviesRef, cleanMovie);
     await fetchMovies();
   }
 
