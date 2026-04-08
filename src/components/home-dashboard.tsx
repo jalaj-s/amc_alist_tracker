@@ -13,7 +13,7 @@ import Link from "next/link";
 
 export function HomeDashboard() {
   const { range, setRange, dateRange } = useTimeRange();
-  const { movies, loading: moviesLoading } = useMovies(dateRange);
+  const { movies, loading: moviesLoading, deleteMovie } = useMovies(dateRange);
   const { profile, loading: settingsLoading } = useSettings();
   const loading = moviesLoading || settingsLoading;
   const membershipCost = profile?.membership_cost ?? 25.99;
@@ -36,7 +36,7 @@ export function HomeDashboard() {
           <SavingsHero summary={summary} />
           <BreakEvenCard summary={summary} />
           <QuickStats summary={summary} />
-          <MovieList movies={movies} />
+          <MovieList movies={movies} onDelete={deleteMovie} />
         </>
       )}
     </div>

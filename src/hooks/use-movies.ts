@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { collection, query, where, orderBy, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/auth-context";
 import type { Movie, VenueType, MovieFormat } from "@/lib/types";
@@ -87,5 +87,11 @@ export function useMovies(dateRange: { from: string; to: string }) {
     return !snapshot.empty;
   }
 
-  return { movies, loading, addMovie, checkDuplicate, refetch: fetchMovies };
+  async function deleteMovie(movieId: string) {
+    if (!user) return;
+    await deleteDoc(doc(db, "profiles", user.uid, "movies", movieId));
+    await fetchMovies();
+  }
+
+  return { movies, loading, addMovie, deleteMovie, checkDuplicate, refetch: fetchMovies };
 }

@@ -1,7 +1,7 @@
 import type { Movie } from "@/lib/types";
 import { FORMAT_LABELS } from "@/lib/constants";
 
-export function MovieRow({ movie }: { movie: Movie }) {
+export function MovieRow({ movie, onDelete }: { movie: Movie; onDelete?: (id: string) => void }) {
   const locationName = movie.amc_location?.name || "";
   const formatLabel = movie.format ? FORMAT_LABELS[movie.format] : "";
   const detail = [movie.watched_date, formatLabel, locationName].filter(Boolean).join(" · ");
@@ -14,6 +14,14 @@ export function MovieRow({ movie }: { movie: Movie }) {
       <div className="flex items-center gap-2 shrink-0 ml-2">
         {movie.letterboxd_rating && <span className="text-[10px] text-accent-yellow">★ {movie.letterboxd_rating}</span>}
         {movie.ticket_value && <span className="text-xs text-accent font-bold">+${movie.ticket_value.toFixed(0)}</span>}
+        {onDelete && (
+          <button
+            onClick={() => { if (confirm(`Delete "${movie.title}"?`)) onDelete(movie.id); }}
+            className="text-gray-600 hover:text-accent-red text-xs ml-1"
+          >
+            ✕
+          </button>
+        )}
       </div>
     </div>
   );
