@@ -9,6 +9,7 @@ export function useTimeRange() {
   const dateRange = useMemo(() => {
     const now = new Date();
     const today = now.toISOString().split("T")[0];
+
     if (range === "this_month") {
       const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
       return { from, to: today };
@@ -24,7 +25,13 @@ export function useTimeRange() {
     if (range === "all_time") {
       return { from: "2000-01-01", to: today };
     }
-    return range;
+    if (typeof range === "object" && "type" in range && range.type === "month") {
+      const daysInMonth = new Date(range.year, range.month, 0).getDate();
+      const from = `${range.year}-${String(range.month).padStart(2, "0")}-01`;
+      const to = `${range.year}-${String(range.month).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
+      return { from, to };
+    }
+    return range as { from: string; to: string };
   }, [range]);
 
   return { range, setRange, dateRange };

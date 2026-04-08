@@ -68,6 +68,7 @@ export type TimeRange =
   | "90_days"
   | "ytd"
   | "all_time"
+  | { type: "month"; year: number; month: number }
   | { from: string; to: string };
 
 export interface SavingsSummary {
