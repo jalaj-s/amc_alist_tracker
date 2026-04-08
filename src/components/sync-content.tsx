@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { useMovies } from "@/hooks/use-movies";
 import { useAutoSync } from "@/hooks/use-auto-sync";
@@ -14,7 +14,13 @@ import { Toast } from "@/components/toast";
 export function SyncContent() {
   const { profile, pricing, locations, addLocation } = useSettings();
   const { addMovie, refetch } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
-  const { newEntries, newCount } = useAutoSync();
+  const { newEntries, hasNew, markSynced, doSync } = useAutoSync();
+  const newCount = newEntries.length;
+
+  // Mark as synced when user visits the sync page (clears the badge dot)
+  useEffect(() => {
+    if (hasNew) markSynced();
+  }, [hasNew]);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<LetterboxdEntry | null>(null);
@@ -27,8 +33,8 @@ export function SyncContent() {
     setSyncing(true); setSyncError("");
     try {
       await refetch();
-      // Trigger a fresh auto-sync by reloading
-      window.location.reload();
+      await doSync();
+      await markSynced();
     } catch { setSyncError("Failed to connect"); }
     finally { setSyncing(false); }
   }

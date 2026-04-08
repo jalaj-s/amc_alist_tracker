@@ -13,7 +13,7 @@ const tabs = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { newCount } = useAutoSync();
+  const { hasNew } = useAutoSync();
 
   if (pathname === "/login") return null;
 
@@ -22,16 +22,14 @@ export function BottomNav() {
       <div className="max-w-md mx-auto flex justify-around py-2">
         {tabs.map((tab) => {
           const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
-          const showBadge = tab.href === "/sync" && newCount > 0;
+          const showDot = tab.href === "/sync" && hasNew;
           return (
             <Link key={tab.href} href={tab.href}
               className={`relative flex flex-col items-center gap-0.5 px-3 py-1 text-xs ${isActive ? "text-accent" : "text-gray-600"}`}>
               <span className="text-lg">{tab.icon}</span>
               <span>{tab.label}</span>
-              {showBadge && (
-                <span className="absolute -top-0.5 right-0.5 bg-accent text-black text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                  {newCount}
-                </span>
+              {showDot && (
+                <span className="absolute top-0 right-1 w-2 h-2 bg-accent rounded-full" />
               )}
             </Link>
           );

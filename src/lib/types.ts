@@ -54,6 +54,7 @@ export interface Profile {
   letterboxd_username: string | null;
   membership_cost: number;
   membership_start_date: string | null;
+  last_sync_date: string | null;
   created_at: string;
 }
 

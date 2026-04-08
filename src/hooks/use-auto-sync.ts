@@ -6,12 +6,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { useMovies } from "@/hooks/use-movies";
 import type { LetterboxdEntry } from "@/lib/types";
 
-interface AutoSyncState {
-  newEntries: LetterboxdEntry[];
-  newCount: number;
-  clearEntries: () => void;
-}
-
 let globalEntries: LetterboxdEntry[] = [];
 let globalListeners: Set<() => void> = new Set();
 
@@ -19,9 +13,9 @@ function notifyListeners() {
   globalListeners.forEach((fn) => fn());
 }
 
-export function useAutoSync(): AutoSyncState {
+export function useAutoSync() {
   const { user } = useAuth();
-  const { profile } = useSettings();
+  const { profile, updateProfile } = useSettings();
   const { movies } = useMovies({ from: "2000-01-01", to: "2099-12-31" });
   const [, forceUpdate] = useState(0);
   const hasSynced = useRef(false);
@@ -38,7 +32,6 @@ export function useAutoSync(): AutoSyncState {
 
   const doSync = useCallback(async () => {
     if (!profile?.letterboxd_username) return;
-
     try {
       const res = await fetch(`/api/letterboxd?username=${encodeURIComponent(profile.letterboxd_username)}`);
       if (!res.ok) return;
@@ -46,26 +39,32 @@ export function useAutoSync(): AutoSyncState {
       globalEntries = data;
       notifyListeners();
     } catch {
-      // silent fail on auto-sync
+      // silent fail
     }
   }, [profile?.letterboxd_username]);
 
-  // Auto-sync once when user is logged in and profile is loaded
   useEffect(() => {
-    if (user && profile?.letterboxd_username && movies.length >= 0 && !hasSynced.current) {
+    if (user && profile?.letterboxd_username && !hasSynced.current) {
       hasSynced.current = true;
       doSync();
     }
-  }, [user, profile?.letterboxd_username, movies.length, doSync]);
+  }, [user, profile?.letterboxd_username, doSync]);
 
+  // Filter to entries not yet in DB
   const newEntries = globalEntries.filter(
     (e) => !loggedKeys.has(`${e.title.toLowerCase()}-${e.watched_date}`)
   );
 
-  function clearEntries() {
-    globalEntries = [];
-    notifyListeners();
+  // Only show badge for entries newer than last sync date
+  const lastSyncDate = profile?.last_sync_date || null;
+  const hasNew = lastSyncDate
+    ? newEntries.some((e) => e.watched_date > lastSyncDate)
+    : newEntries.length > 0;
+
+  async function markSynced() {
+    const today = new Date().toISOString().split("T")[0];
+    await updateProfile({ last_sync_date: today });
   }
 
-  return { newEntries, newCount: newEntries.length, clearEntries };
+  return { newEntries, hasNew, markSynced, doSync };
 }
