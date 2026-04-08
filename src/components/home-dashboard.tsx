@@ -6,7 +6,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { calculateSavings, prorateMembershipCost } from "@/lib/savings";
 import { TimeRangePills } from "@/components/time-range-pills";
 import { SavingsHero } from "@/components/savings-hero";
-import { BreakEvenCard } from "@/components/break-even-card";
 import { QuickStats } from "@/components/quick-stats";
 import { MovieList } from "@/components/movie-list";
 import Link from "next/link";
@@ -34,7 +33,6 @@ export function HomeDashboard() {
       ) : (
         <>
           <SavingsHero summary={summary} />
-          <BreakEvenCard summary={summary} />
           <QuickStats summary={summary} />
           <MovieList movies={movies} onDelete={deleteMovie} />
         </>
